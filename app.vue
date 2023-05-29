@@ -12,7 +12,7 @@ const words = [
   {word: 'hun', meaning: 'Heart', type: 'Noun'},
   {word: 'negbe', meaning: 'Back', type: 'Noun'},
   {word: 'gbako', meaning: 'Jaw', type: 'Noun'},
-  {word: 'to', meaning: 'Ear', type: 'Noun'},
+  {word: 'tò', meaning: 'Ear', type: 'Noun'},
   {word: 'mii', meaning: 'Feaces', type: 'Noun'},
   {word: 'sii', meaning: 'Water', type: 'Noun'},
   {word: 'hevi', meaning: 'Fish', type: 'Noun'},
@@ -54,7 +54,7 @@ const words = [
   {word: 'cuku', meaning: 'Dog', type: 'Noun'},
   {word: 'ajaka', meaning: 'Rat', type: 'Noun'},
   {word: 'nuene', meaning: 'That', type: 'Article'},
-  {word: 'nueye', meaning: 'Rat', type: 'Article'},
+  {word: 'nueye', meaning: 'This', type: 'Article'},
   {word: 'mali-mali me', meaning: 'Soon', type: 'Article'},
   {word: 'vii', meaning: 'Here', type: 'Article'},
   {word: 'blome', meaning: 'In', type: 'Preposition'},
@@ -79,6 +79,7 @@ const words = [
   {word: 'heji', meaning: 'Climb', type: 'Verb'},
   {word: 'kenwezu', meaning: 'Run', type: 'Verb'},
   {word: 'lon', meaning: 'Jump', type: 'Verb'},
+  {word: 'zon', meaning: 'Fly', type: 'Verb'},
   {word: 'duwe', meaning: 'Dance', type: 'Verb'},
   {word: 'dayihu', meaning: 'Play', type: 'Verb'},
   {word: 'dogbe', meaning: 'Greet', type: 'Verb'},
@@ -105,13 +106,39 @@ const searchText = ref('');
 const wordMeaning = ref('');
 const wordPartOfSpeech = ref('');
 const wordExist = ref(false);
+const sentenceMeaning = ref([]);
+const sentenceWordTypes = ref([]);
 
 const search = () => {
   let data = words.filter(e => e.word.toLowerCase() === searchText.value.toLowerCase());
   if (data.length > 0) {
+    sentenceMeaning.value = [];
+    sentenceWordTypes.value = [];
     wordExist.value = true;
     wordMeaning.value = data[0].meaning;
     wordPartOfSpeech.value = data[0].type;
+  } else {
+    wordMeaning.value = '';
+    wordPartOfSpeech.value = '';
+    wordExist.value = false;
+    sentenceMeaning.value = [];
+    sentenceWordTypes.value = [];
+    let sentenceWords = searchText.value.split(' ');
+    for (let word of sentenceWords) {
+      let temp = words.filter(e => e.word.toLowerCase() === word.toLowerCase());
+      sentenceMeaning.value.push(temp[0].meaning);
+      sentenceWordTypes.value.push(temp[0].type);
+    }
+  }
+};
+
+const clearData = () => {
+  if (searchText.value === '') {
+    sentenceMeaning.value = [];
+    sentenceWordTypes.value = [];
+    wordMeaning.value = '';
+    wordPartOfSpeech.value = '';
+    wordExist.value = false;
   }
 };
 </script>
@@ -119,7 +146,7 @@ const search = () => {
 <template>
   <div class="min-h-screen pt-32 bg-neutral-100">
     <h1 class="text-gray-800 font-bold text-2xl text-center mb-8 uppercase tracking-wide">Part Of Speech Tagging</h1>
-    <div class="max-w-2xl mx-auto border border-gray-300 rounded p-12 bg-white">
+    <div class="max-w-2xl mx-auto border border-gray-300 rounded px-6 py-12 lg:p-12 bg-white">
       <!-- Search Area -->
       <div class="flex items-center space-x-2">
         <input
@@ -129,14 +156,15 @@ const search = () => {
             list="suggestions"
             placeholder="Start Typing A Word..."
             class="block text-gray-800 w-full h-16 px-4 border border-gray-300"
+            @change="clearData"
         >
-        <PrimaryButton
+        <button
             @click="search"
             type="button"
-            class="h-16 w-16 text-center cursor-default inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-gray-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+            class="h-16 w-16 text-center cursor-default inline-flex items-center px-4 py-2 bg-indigo-600 active:bg-indigo-700 focus:bg-indigo-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-gray-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
         >
           Go
-        </PrimaryButton>
+        </button>
       </div>
 
       <div class="mt-8" v-if="wordPartOfSpeech">
@@ -146,6 +174,20 @@ const search = () => {
       <div v-if="wordMeaning" class="mt-8 flex items-center space-x-8 text-lg">
         <h2 class="text-gray-800 font-medium">Word Meaning: </h2>
         <p class="text-blue-500 font-semibold">{{wordMeaning}}</p>
+      </div>
+
+      <div v-if="sentenceWordTypes.length > 0" class="mt-8 flex items-center space-x-8 text-lg">
+        <h2 class="text-gray-800 font-medium">Word Composition: </h2>
+        <div class="space-x-2">
+          <span class="text-blue-500 font-semibold" v-for="(wordType, index) in sentenceWordTypes">{{wordType}} <span v-if="index != sentenceWordTypes.length - 1">+</span></span>
+        </div>
+      </div>
+
+      <div v-if="sentenceMeaning.length > 0" class="mt-8 flex items-center space-x-8 text-lg">
+        <h2 class="text-gray-800 font-medium">Sentence Meaning: </h2>
+        <div class="space-x-2">
+          <span class="text-blue-500 font-semibold" v-for="meaning in sentenceMeaning">{{meaning}}</span>
+        </div>
       </div>
     </div>
   </div>
